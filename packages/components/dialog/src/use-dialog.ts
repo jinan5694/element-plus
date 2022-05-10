@@ -9,9 +9,11 @@ import {
 import { isClient, useTimeoutFn } from '@vueuse/core'
 
 import {
+  defaultNamespace,
+  useGlobalConfig,
+  useId,
   useLockscreen,
   useModal,
-  useRestoreActive,
   useZIndex,
 } from '@element-plus/hooks'
 import { UPDATE_MODEL_EVENT } from '@element-plus/constants'
@@ -29,6 +31,8 @@ export const useDialog = (
   const { nextZIndex } = useZIndex()
 
   let lastPosition = ''
+  const titleId = useId()
+  const bodyId = useId()
   const visible = ref(false)
   const closed = ref(false)
   const rendered = ref(false) // when desctroyOnClose is true, we initialize it as false vise versa
@@ -41,9 +45,11 @@ export const useDialog = (
     isNumber(props.width) ? `${props.width}px` : props.width
   )
 
+  const namespace = useGlobalConfig('namespace', defaultNamespace)
+
   const style = computed<CSSProperties>(() => {
     const style: CSSProperties = {}
-    const varPrefix = `--el-dialog`
+    const varPrefix = `--${namespace.value}-dialog`
     if (!props.fullscreen) {
       if (props.top) {
         style[`${varPrefix}-margin-top`] = props.top
@@ -122,6 +128,14 @@ export const useDialog = (
     visible.value = false
   }
 
+  function onOpenAutoFocus() {
+    emit('openAutoFocus')
+  }
+
+  function onCloseAutoFocus() {
+    emit('closeAutoFocus')
+  }
+
   if (props.lockScroll) {
     useLockscreen(visible)
   }
@@ -134,8 +148,6 @@ export const useDialog = (
       visible
     )
   }
-
-  useRestoreActive(visible)
 
   watch(
     () => props.modelValue,
@@ -190,6 +202,10 @@ export const useDialog = (
     onModalClick,
     close,
     doClose,
+    onOpenAutoFocus,
+    onCloseAutoFocus,
+    titleId,
+    bodyId,
     closed,
     style,
     rendered,
